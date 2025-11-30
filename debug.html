@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Raw Debug Mode</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f0f0f0; }
+        .box { background: white; padding: 20px; border: 1px solid #ccc; margin-bottom: 20px; }
+        button { padding: 15px; font-size: 16px; cursor: pointer; background: blue; color: white; border: none; }
+        #loading { display: none; color: red; font-weight: bold; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>🔍 Raw Debug Mode</h1>
+    <p>Upload a file and check if raw text appears below.</p>
+
+    <div class="box">
+        <input type="file" id="audioFile">
+        <br><br>
+        <button onclick="runTest()">GENERATE NOTES (TEST)</button>
+    </div>
+
+    <div id="loading">⏳ Processing... Watch VS Code Terminal...</div>
+
+    <div class="box">
+        <h3>SUMMARY:</h3>
+        <p id="summary" style="white-space: pre-wrap;">(Waiting...)</p>
+    </div>
+
+    <div class="box">
+        <h3>QUIZ:</h3>
+        <p id="quiz" style="white-space: pre-wrap;">(Waiting...)</p>
+    </div>
+
+    <script>
+        async function runTest() {
+            const fileInput = document.getElementById('audioFile');
+            if (!fileInput.files[0]) { alert("Select a file first!"); return; }
+
+            // 1. Show Loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('summary').innerText = "Loading...";
+            
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                // 2. Send Request
+                console.log("Sending request...");
+                const response = await fetch("http://127.0.0.1:8000/process-audio", {
+                    method: "POST",
+                    body: formData
+                });
+
+                console.log("Response status:", response.status);
+
+                if (!response.ok) {
+                    alert("Server Error! Check Console.");
+                    throw new Error("Server Status: " + response.status);
+                }
+
+                // 3. Parse JSON
+                const data = await response.json();
+                console.log("Data received:", data);
+
+                alert("Success! Data received from Python.");
+
+                // 4. Show Data (Using safe innerText)
+                document.getElementById('summary').innerText = data.summary;
+                document.getElementById('quiz').innerText = data.quiz;
+
+            } catch (error) {
+                alert("Javascript Error: " + error.message);
+                console.error(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

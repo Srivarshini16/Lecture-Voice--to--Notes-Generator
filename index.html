@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture Notes AI (Always Visible)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f0fdf4; padding: 20px; font-family: sans-serif; }
+        .box { background: white; padding: 20px; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 10px; }
+        h3 { font-weight: bold; margin-bottom: 10px; color: #333; }
+        pre { white-space: pre-wrap; color: #555; }
+    </style>
+</head>
+<body>
+
+    <h1 class="text-3xl font-bold text-center mb-6">Lecture Notes AI</h1>
+
+    <!-- 1. UPLOAD BOX -->
+    <div class="box border-blue-500">
+        <h3 class="text-blue-600">Step 1: Upload</h3>
+        <input type="file" id="audioFile" class="mb-4 block w-full">
+        <button onclick="start()" class="bg-blue-600 text-white px-6 py-3 rounded font-bold hover:bg-blue-700 w-full">
+            Generate Notes (Force Mode)
+        </button>
+        <p id="statusLog" class="mt-2 text-sm text-gray-500">Status: Waiting for you...</p>
+    </div>
+
+    <!-- 2. SUMMARY BOX (ALWAYS VISIBLE) -->
+    <div class="box border-indigo-500">
+        <h3 class="text-indigo-600">Step 2: Summary Results</h3>
+        <p class="text-xs text-gray-400 mb-2">(Results will appear below automatically)</p>
+        <div id="summaryDisplay" class="p-4 bg-indigo-50 rounded min-h-[50px]">
+            Waiting for data...
+        </div>
+    </div>
+
+    <!-- 3. QUIZ BOX (ALWAYS VISIBLE) -->
+    <div class="box border-green-500">
+        <h3 class="text-green-600">Step 3: Quiz Results</h3>
+        <div id="quizDisplay" class="p-4 bg-green-50 rounded min-h-[50px]">
+            Waiting for data...
+        </div>
+    </div>
+
+    <script>
+        async function start() {
+            const status = document.getElementById('statusLog');
+            const fileInput = document.getElementById('audioFile');
+
+            if (!fileInput.files[0]) { alert("Select a file!"); return; }
+
+            status.innerText = "Status: 🚀 Uploading... Please wait 10-20 seconds.";
+            status.style.color = "blue";
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                // CALL PYTHON
+                const response = await fetch("http://127.0.0.1:8000/process-audio", {
+                    method: "POST",
+                    body: formData
+                });
+
+                // CHECK ERROR
+                if (!response.ok) {
+                    throw new Error("Server Error: " + response.status);
+                }
+
+                status.innerText = "Status: ✅ Data Received! Processing...";
+                
+                // READ DATA
+                const data = await response.json();
+                console.log("DATA:", data); // Check Console (F12)
+
+                // POPUP TO PROVE IT ARRIVED
+                alert("Data Arrived from Python!\nClick OK to see it.");
+
+                // UPDATE SCREEN
+                document.getElementById('summaryDisplay').innerText = data.summary;
+                document.getElementById('quizDisplay').innerText = data.quiz;
+                
+                status.innerText = "Status: ✨ Finished!";
+                status.style.color = "green";
+
+            } catch (error) {
+                console.error(error);
+                status.innerText = "Status: ❌ Error: " + error.message;
+                status.style.color = "red";
+                alert("Error: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
